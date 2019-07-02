@@ -2,6 +2,7 @@ var Accessory = require('../').Accessory;
 var Service = require('../').Service;
 var Characteristic = require('../').Characteristic;
 var uuid = require('../').uuid;
+var log = require('yalm');
 
 
 ////////////////   CHANGE THESE VALUES FOR EVERY ACCESSORY   !!!!!!!!!!!!!//////////////////////////
@@ -36,28 +37,6 @@ var options = {
   clientId: MQTT_ID
 };
 
-//connect to MQTT
-var client = mqtt.connect(options);
-
-client.on('connect', function () {
-  client.publish(relayTopic, null);
-});
-
-//on new message from the status topic take action if needed on IOS
-client.on('message', function(topic, message) {
-  if(topic == statusTopic){
-    LightController.power = message == "ON" ? true : false;
-  }
-  if(topic == telemetryTopic){
-    var telemetryObject = JSON.parse(message);
-    LightController.power = telemetryObject.POWER == "ON" ? true : false;
-  }
-});
-
-//subscribe to the status topic
-client.subscribe(statusTopic, {qos: 1});
-client.subscribe(telemetryTopic, {qos:1});
-
 var LightController = {
   name: NAME, //name of accessory
   pincode: "031-45-154",
@@ -91,7 +70,7 @@ var LightController = {
   //get power of accessory
   getPower: function() {
     if(this.outputLogs) console.log("'%s' is %s.", this.name, this.power ? "on" : "off");
-    return this.power ? true : false;
+    return this.power;
   },
 
   //update the IOS device with the current state of the accessory
@@ -152,3 +131,26 @@ lightAccessory
   .on('get', function(callback) {
     callback(null, LightController.getPower());
   });
+
+
+  //connect to MQTT
+  var client = mqtt.connect(options);
+
+  client.on('connect', function () {
+    client.publish(relayTopic, null);
+  });
+
+  //on new message from the status topic take action if needed on IOS
+  client.on('message', function(topic, message) {
+    if(topic == statusTopic){
+      LightController.power = message == "ON" ? true : false;
+    }
+    if(topic == telemetryTopic){
+      var telemetryObject = JSON.parse(message);
+      LightController.power = telemetryObject.POWER == "ON" ? true : false;
+    }
+  });
+
+  //subscribe to the status topic
+  client.subscribe(statusTopic, {qos: 1});
+  client.subscribe(telemetryTopic, {qos:1});

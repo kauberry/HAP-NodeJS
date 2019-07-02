@@ -5,7 +5,7 @@ var uuid = require('../').uuid;
 
 var mqtt = require('mqtt');
 var log = require('yalm');
-log.setLevel('debug');
+log.setLevel('info');
 
 var execute = function (accessory, characteristic, value) {
   log.info("executed accessory: " + accessory + ", and characteristic: " + characteristic + ", with value: " + value + ".");
